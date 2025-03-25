@@ -1,19 +1,12 @@
+import os
 import pytest
 from playwright.sync_api import sync_playwright
 
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--browser",
-        action="store",
-        default="chromium",
-        help="Browser for tests: chromium, firefox and webkit"
-    )
-
-
 @pytest.fixture(scope="session")
-def browser(pytestconfig):
-    browser_name = pytestconfig.getoption("--browser")
+def browser():
+    browser_name = os.getenv("PLAYWRIGHT_BROWSER", "chromium")  # Берем из переменной окружения
+
     with sync_playwright() as p:
         if browser_name == "chromium":
             browser = p.chromium.launch(headless=True)
@@ -23,6 +16,7 @@ def browser(pytestconfig):
             browser = p.webkit.launch(headless=True)
         else:
             raise ValueError(f"Unsupported browser: {browser_name}")
+
         yield browser
         browser.close()
 
