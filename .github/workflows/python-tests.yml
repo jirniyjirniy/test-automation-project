@@ -1,4 +1,4 @@
-name: Advanced Python Tests
+name: Cross-Browser Tests
 
 on:
   push:
@@ -11,32 +11,44 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        browser: [chromium] # Можно добавить firefox, webkit
+        browser: [chromium, firefox, webkit]
+      fail-fast: false  # Не останавливать всю матрицу при ошибке одного браузера
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
         python-version: "3.x"
 
     - name: Install dependencies
       run: |
+        python -m pip install --upgrade pip
         pip install -r requirements.txt
-        playwright install ${{ matrix.browser }}
+        pip install playwright pytest-playwright
+
+    - name: Install Playwright browsers
+      run: |
+        npx playwright install ${{ matrix.browser }}
+        npx playwright install-deps  # Установка системных зависимостей
 
     - name: Run tests
       run: |
-        pytest --html=report.html --browser ${{ matrix.browser }}
+        pytest --html=report-${{ matrix.browser }}.html --browser ${{ matrix.browser }}
 
-    - uses: actions/upload-artifact@v4
-      if: always() # Загружаем артефакт даже при ошибках
+    - name: Upload test report
+      uses: actions/upload-artifact@v4
       with:
         name: test-report-${{ matrix.browser }}
-        path: report.html
+        path: report-${{ matrix.browser }}.html
 
-    - name: Notify Slack
-      if: failure() # Отправляем уведомление при падении
-      uses: slackapi/slack-github-action@v1
+    - name: Upload screenshots (if any)
+      if: failure()  # Только при падении тестов
+      uses: actions/upload-artifact@v4
       with:
-        slack-message: "Tests failed in ${{ matrix.browser }}"
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        name: screenshots-${{ matrix.browser }}
+        path: |
+          test-results/
+          *.png
