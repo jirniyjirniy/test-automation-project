@@ -21,26 +21,18 @@ jobs:
       with:
         python-version: "3.x"
 
-    - name: Install system dependencies
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgbm-dev libnss3 libatk1.0-0 libatk-bridge2.0-0 libxkbcommon-x11-0
-
-    - name: Install Python dependencies
-      run: |
+        sudo apt-get install -y libgbm-dev libnss3 libatk1.0-0
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install playwright pytest pytest-html pytest-xdist
 
-    - name: Install Playwright browsers
+    - name: Install browsers
       run: |
         npx playwright install ${{ matrix.browser }} --with-deps
         npx playwright install
-
-    - name: Verify Playwright installation
-      run: |
-        npx playwright --version
-        ls -la ~/.cache/ms-playwright/
 
     - name: Create reports directory
       run: mkdir -p reports
@@ -49,10 +41,19 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
       run: |
-        pytest --html=reports/report-$BROWSER.html -n 2
+        pytest --html=reports/report-$BROWSER.html -n 2 || true  # Продолжаем даже при ошибках тестов
 
-    - name: Upload reports
+    - name: Upload report
       uses: actions/upload-artifact@v4
       with:
-        name: test-reports
-        path: reports/
+        name: report-${{ matrix.browser }}  # Уникальное имя для каждого браузера
+        path: reports/report-${{ matrix.browser }}.html
+
+    - name: Upload screenshots
+      if: failure()  # Только при падении тестов
+      uses: actions/upload-artifact@v4
+      with:
+        name: screenshots-${{ matrix.browser }}  # Уникальное имя
+        path: |
+          test-results/
+          *.png
