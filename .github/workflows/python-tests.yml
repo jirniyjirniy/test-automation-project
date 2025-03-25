@@ -23,17 +23,26 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install playwright pytest
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install playwright pytest pytest-html pytest-playwright
+
+    - name: Install browsers
+      run: |
         playwright install ${{ matrix.browser }}
         playwright install-deps
 
+    - name: Create reports directory
+      run: mkdir -p reports
+
     - name: Run tests
       env:
-        PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
+        BROWSER: ${{ matrix.browser }}
       run: |
-        pytest --html=report-${{ matrix.browser }}.html
+        pytest --html=reports/report-$BROWSER.html -n auto
 
-    - uses: actions/upload-artifact@v4
+    - name: Upload reports
+      uses: actions/upload-artifact@v4
       with:
-        name: report-${{ matrix.browser }}
-        path: report-${{ matrix.browser }}.html
+        name: test-reports
+        path: reports/
