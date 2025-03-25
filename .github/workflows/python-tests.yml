@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         browser: [chromium, firefox, webkit]
-      fail-fast: false  # Не останавливать всю матрицу при ошибке одного браузера
+      fail-fast: false
 
     steps:
     - name: Checkout code
@@ -32,23 +32,16 @@ jobs:
     - name: Install Playwright browsers
       run: |
         npx playwright install ${{ matrix.browser }}
-        npx playwright install-deps  # Установка системных зависимостей
+        npx playwright install-deps
 
     - name: Run tests
+      env:
+        BROWSER: ${{ matrix.browser }}
       run: |
-        pytest --html=report-${{ matrix.browser }}.html --browser ${{ matrix.browser }}
+        pytest --html=report-$BROWSER.html
 
-    - name: Upload test report
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: test-report-${{ matrix.browser }}
         path: report-${{ matrix.browser }}.html
-
-    - name: Upload screenshots (if any)
-      if: failure()  # Только при падении тестов
-      uses: actions/upload-artifact@v4
-      with:
-        name: screenshots-${{ matrix.browser }}
-        path: |
-          test-results/
-          *.png
