@@ -21,16 +21,26 @@ jobs:
       with:
         python-version: "3.x"
 
-    - name: Install dependencies
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgbm-dev libnss3 libatk1.0-0 libatk-bridge2.0-0 libxkbcommon-x11-0
+
+    - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install playwright pytest pytest-html pytest-playwright pytest-xdist
+        pip install playwright pytest pytest-html pytest-xdist
 
-    - name: Install browsers
+    - name: Install Playwright browsers
       run: |
-        playwright install ${{ matrix.browser }}
-        playwright install-deps
+        npx playwright install ${{ matrix.browser }} --with-deps
+        npx playwright install
+
+    - name: Verify Playwright installation
+      run: |
+        npx playwright --version
+        ls -la ~/.cache/ms-playwright/
 
     - name: Create reports directory
       run: mkdir -p reports
