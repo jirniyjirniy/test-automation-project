@@ -1,4 +1,4 @@
-name: Run Python Tests
+name: Advanced Python Tests
 
 on:
   push:
@@ -9,32 +9,34 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        browser: [chromium] # Можно добавить firefox, webkit
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: "3.x"
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install playwright pytest-playwright
-
-    - name: Install Playwright browsers
-      run: |
-        npx playwright install chromium
+        playwright install ${{ matrix.browser }}
 
     - name: Run tests
       run: |
-        pytest --html=report.html
+        pytest --html=report.html --browser ${{ matrix.browser }}
 
-    - name: Upload test report
-      uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v4
+      if: always() # Загружаем артефакт даже при ошибках
       with:
-        name: test-report
+        name: test-report-${{ matrix.browser }}
         path: report.html
+
+    - name: Notify Slack
+      if: failure() # Отправляем уведомление при падении
+      uses: slackapi/slack-github-action@v1
+      with:
+        slack-message: "Tests failed in ${{ matrix.browser }}"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
