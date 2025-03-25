@@ -25,7 +25,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install playwright pytest pytest-html pytest-playwright
+        pip install playwright pytest pytest-html pytest-playwright pytest-xdist
 
     - name: Install browsers
       run: |
@@ -39,7 +39,7 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
       run: |
-        pytest --html=reports/report-$BROWSER.html -n auto
+        pytest --html=reports/report-$BROWSER.html -n 2
 
     - name: Upload reports
       uses: actions/upload-artifact@v4
