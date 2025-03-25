@@ -14,10 +14,10 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3  # Обновите checkout до v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4  # Обновите setup-python до v4
       with:
         python-version: '3.x'
 
@@ -31,7 +31,7 @@ jobs:
         pytest --html=report.html
 
     - name: Upload test report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v3.1.2  # Укажите конкретную версию
       with:
         name: test-report
         path: report.html
